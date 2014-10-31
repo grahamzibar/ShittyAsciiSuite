@@ -232,7 +232,50 @@ function GridController(_view, _export_btn, _model, _toolbar_controller) {
 	};
 	
 	function onexport(e) {
-		
+		var data = new Exporter(_model.get_blips());
+		window.open(URL.createObjectURL(data.get_html()), '_blank');
+	};
+	
+	__constructor__();
+};
+
+function Exporter(_blips) {
+	var HTML_FILE = '<!DOCTYPE html><html><head><meta charset="utf-8"><style type="text/css">body {font-size:13px;font-family:monospace;line-height:13px;} span {display:inline-block;width:13px;height:13px;}</style></head><body>[]</body></html>';
+	var _html;
+	var _raw;
+	
+	function __constructor__() {
+		var html = '';
+		var raw = '';
+		for (var rows = _blips, rl = rows.length, i = 0; i < rl; i++) {
+			for (var cols = rows[i], cl = cols.length, j = 0; j < cl; j++) {
+				var code = cols[j].get_value();
+				raw += code;
+				raw += ' ';
+				html += '<span>';
+				if (code === -1)
+					html += '&nbsp;';
+				else {
+					html += '&#';
+					html += code;
+					html += ';';
+				}
+				html += '</span>';
+			}
+			html += '<br />';
+			raw += '\n';
+		}
+		html = HTML_FILE.replace('[]', html);
+		_html = html;
+		_raw = raw;
+	};
+	
+	this.get_html = function() {
+		return new Blob([_html], { type: 'text/html' });
+	};
+	
+	this.get_grid = function() {
+		return new Blob([_raw], { type: 'text/plain' });
 	};
 	
 	__constructor__();
