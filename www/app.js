@@ -1,8 +1,9 @@
 function Blip(_row, _column) {
-	var _value = Blip.EMPTY;
+	var _value = localStorage[_row + ',' + _column] || Blip.EMPTY;
 	
 	this.set_value = function(val) {
 		_value = val;
+		localStorage[_row + ',' + _column] = val;
 	};
 	
 	this.get_value = function() {
@@ -11,6 +12,7 @@ function Blip(_row, _column) {
 	
 	this.clear = function() {
 		_value = Blip.EMPTY;
+		delete localStorage[_row + ',' + _column];
 	};
 	
 	this.get_coordinates = function() {
@@ -209,6 +211,9 @@ function GridController(_view, _export_btn, _model, _toolbar_controller) {
 				a.style.height = h + 'px';
 				a.setAttribute('rel', i + '_' + j);
 				
+				var current_val = _model.get_blip(i, j).get_value();
+				if (current_val != -1)
+					a.innerHTML = '&#' + current_val + ';';
 				_view.appendChild(a);
 			}
 		}
@@ -222,13 +227,7 @@ function GridController(_view, _export_btn, _model, _toolbar_controller) {
 		var coord = e.target.getAttribute('rel').split('_');
 		
 		var blip = _model.get_blip(coord[0], coord[1]);
-		if (code == -1) {
-			blip.clear();
-			e.target.innerHTML = '';
-		} else {
-			blip.set_value(code); // Here, should I store entities?
-			e.target.innerHTML = '&#' + code + ';';
-		}
+		set_value(blip, e.target, code);
 	};
 	
 	function onexport(e) {
@@ -236,11 +235,21 @@ function GridController(_view, _export_btn, _model, _toolbar_controller) {
 		window.open(URL.createObjectURL(data.get_html()), '_blank');
 	};
 	
+	function set_value(blip, blipview, code) {
+		if (code == Blip.EMPTY) {
+			blip.clear();
+			blipview.innerHTML = '';
+		} else {
+			blip.set_value(code); // Here, should I store entities?
+			blipview.innerHTML = '&#' + code + ';';
+		}
+	};
+	
 	__constructor__();
 };
 
 function Exporter(_blips) {
-	var HTML_FILE = '<!DOCTYPE html><html><head><meta charset="utf-8"><style type="text/css">body {font-size:13px;font-family:monospace;line-height:13px;} span {display:inline-block;width:13px;height:13px;}</style></head><body>[]</body></html>';
+	var HTML_FILE = '<!DOCTYPE html><html><head><meta charset="utf-8"><style type="text/css">body {font-size:13px;font-family:monospace;line-height:13px;} span {display:inline-block;width:13px;height:13px;text-align:center;}</style></head><body>[]</body></html>';
 	var _html;
 	var _raw;
 	
@@ -253,7 +262,7 @@ function Exporter(_blips) {
 				raw += code;
 				raw += ' ';
 				html += '<span>';
-				if (code === -1)
+				if (code == -1)
 					html += '&nbsp;';
 				else {
 					html += '&#';
