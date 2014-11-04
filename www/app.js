@@ -218,16 +218,26 @@ function GridController(_view, _export_btn, _model, _toolbar_controller) {
 			}
 		}
 		
-		_view.addEventListener('click', onclick, false);
+		_view.addEventListener('mousedown', onclick, false);
+		_view.addEventListener('contextmenu', onmenu, false);
 		_export_btn.addEventListener('click', onexport, false);
 	};
 	
 	function onclick(e) {
-		var code = _toolbar_controller.get_selected_code();
+		e.preventDefault();
+		e.stopPropagation();
+		
+		var code = e.button === 2 ? -1 : _toolbar_controller.get_selected_code();
 		var coord = e.target.getAttribute('rel').split('_');
 		
 		var blip = _model.get_blip(coord[0], coord[1]);
 		set_value(blip, e.target, code);
+	};
+	
+	function onmenu(e) {
+		e.preventDefault();
+		e.stopPropagation();
+		return false;
 	};
 	
 	function onexport(e) {
