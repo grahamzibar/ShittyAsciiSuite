@@ -36,6 +36,8 @@ Blip.EMPTY = -1;
 
 function Grid(_width, _height) {
 	var _blips = Grid.new_grid(_width, _height);
+	this.width = _width;
+	this.height = _height;
 	
 	function __constructor__() {
 		for (var i = 0, r = _blips, l = _width; i < l; i++) {
@@ -191,9 +193,10 @@ function ToolbarController(_view, _model) {
 	__constructor__.call(this);
 };
 
-function GridController(_view, _export_btn, _model, _toolbar_controller) {
+function GridController(_view, _field, _export_btn, _import_btn, _clear_btn, _model, _toolbar_controller) {
 	var BLIP_HEIGHT = 15;
 	var BLIP_WIDTH = 16;
+	var _view_grid = new Array();
 	
 	function __constructor__() {
 		var w = BLIP_WIDTH;
@@ -204,6 +207,7 @@ function GridController(_view, _export_btn, _model, _toolbar_controller) {
 		_view.style.height = ((h + 1) * rows.length) + 'px';
 		
 		for (var i = 0, l = rows.length; i < l; i++) {
+			_view_grid[i] = new Array();
 			for (var cols = rows[i], j = 0, s = cols.length; j < s; j++) {
 				var a = document.createElement('div');
 				a.className = 'Blip';
@@ -214,6 +218,8 @@ function GridController(_view, _export_btn, _model, _toolbar_controller) {
 				var current_val = _model.get_blip(i, j).get_value();
 				if (current_val != -1)
 					a.innerHTML = '&#' + current_val + ';';
+				
+				_view_grid[i][j] = a;
 				_view.appendChild(a);
 			}
 		}
@@ -221,6 +227,8 @@ function GridController(_view, _export_btn, _model, _toolbar_controller) {
 		_view.addEventListener('mousedown', onclick, false);
 		_view.addEventListener('contextmenu', onmenu, false);
 		_export_btn.addEventListener('click', onexport, false);
+		_import_btn.addEventListener('click', onimport, false);
+		_clear_btn.addEventListener('click', onclear, false);
 	};
 	
 	function onclick(e) {
@@ -242,7 +250,24 @@ function GridController(_view, _export_btn, _model, _toolbar_controller) {
 	
 	function onexport(e) {
 		var data = new Exporter(_model.get_blips());
-		window.open(URL.createObjectURL(data.get_html()), '_blank');
+		window.open(URL.createObjectURL(data.get_raw()), '_blank');
+	};
+	
+	function onimport(e) {
+		var codes = _field.value.trim().split(' ');
+		for (var i = 0, l = _model.width; i < l; i++) {
+			for (var j = 0, s = _model.height; j < s; j++)
+				set_value(_model.get_blip(i, j), _view_grid[i][j], codes[i * l + j]);
+		}
+		_field.value = '';
+	};
+	
+	function onclear(e) {
+		var rows = _model.get_blips();
+		for (var i = 0, l = rows.length; i < l; i++) {
+			for (cols = rows[i], j = 0, s = cols.length; j < s; j++)
+				set_value(cols[j], _view_grid[i][j], Blip.EMPTY);
+		}
 	};
 	
 	function set_value(blip, blipview, code) {
@@ -293,7 +318,7 @@ function Exporter(_blips) {
 		return new Blob([_html], { type: 'text/html' });
 	};
 	
-	this.get_grid = function() {
+	this.get_raw = function() {
 		return new Blob([_raw], { type: 'text/plain' });
 	};
 	
@@ -317,7 +342,10 @@ var toolbar = new Toolbar();
 var toolbar_controller = new ToolbarController(document.getElementById('toolbar'), toolbar);
 var grid_controller = new GridController(
 	document.getElementById('grid'),
+	document.getElementById('import_field'),
 	document.getElementById('export_btn'),
+	document.getElementById('import_btn'),
+	document.getElementById('clear_btn'),
 	grid,
 	toolbar_controller
 );

@@ -56,3 +56,9 @@ body {
 	
 	cursor:pointer;
 }
+
+textarea {
+	display:block;
+	width:60%;
+	height:200px;
+}
